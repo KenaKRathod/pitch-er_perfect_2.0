@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pitcher Perfect — IEEE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #050d1a; --bg2: #0a1628; --bg3: #0f1f38;
+    --card: #0d1c33; --card-hover: #112240;
+    --accent: #00d4ff; --accent2: #7c3aed;
+    --premium: #f59e0b;
+    --text: #e2e8f0; --text-muted: #64748b; --text-dim: #94a3b8;
+    --border: rgba(0,212,255,0.12); --border-hover: rgba(0,212,255,0.35);
+    --success: #10b981; --danger: #ef4444;
+    --radius: 16px; --radius-sm: 10px;
+    --font-head: 'Syne', sans-serif; --font-body: 'DM Sans', sans-serif;
+  }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 15px; line-height: 1.6; min-height: 100vh; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px); background-size: 48px 48px; pointer-events: none; z-index: 0; }
+  .orb { position: fixed; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0; opacity: 0.18; }
+  .orb1 { width: 600px; height: 600px; background: #00d4ff; top: -200px; right: -150px; }
+  .orb2 { width: 500px; height: 500px; background: #7c3aed; bottom: -150px; left: -100px; }
+  .orb3 { width: 300px; height: 300px; background: #f59e0b; top: 40%; left: 50%; transform: translateX(-50%); opacity: 0.08; }
+
+  .page { position: relative; z-index: 1; min-height: 100vh; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem; animation: fadeUp 0.5s ease both; }
+  .page.active { display: flex; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* TOPBAR */
+  .topbar { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: rgba(5,13,26,0.88); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; z-index: 100; }
+  .topbar-logo { font-family: var(--font-head); font-weight: 800; font-size: 1.1rem; letter-spacing: -0.5px; color: var(--accent); }
+  .topbar-logo span { color: var(--text); }
+  .wallet-pill { display: flex; align-items: center; gap: 8px; background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 500; color: var(--premium); }
+  .team-info-pill { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-dim); }
+  .team-dot { width: 28px; height: 28px; background: linear-gradient(135deg, var(--accent2), var(--accent)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #fff; }
+
+  /* LOGIN */
+  #page-login { padding-top: 80px; }
+  .login-wrap { width: 100%; max-width: 480px; }
+  .brand-mark { text-align: center; margin-bottom: 2.5rem; }
+  .ieee-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(0,212,255,0.08); border: 1px solid var(--border); border-radius: 999px; padding: 6px 16px; font-size: 12px; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; font-weight: 600; margin-bottom: 1.2rem; }
+  .brand-mark h1 { font-family: var(--font-head); font-size: clamp(2rem, 6vw, 3rem); font-weight: 800; letter-spacing: -2px; line-height: 1.1; color: #fff; }
+  .brand-mark h1 .grad { background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .brand-mark p { color: var(--text-dim); font-size: 14px; margin-top: 0.75rem; }
+  .login-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem; }
+  .login-card h2 { font-family: var(--font-head); font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .form-group { margin-bottom: 1rem; }
+  .form-group label { display: block; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-dim); margin-bottom: 6px; }
+  .form-group input, .form-group select { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; color: var(--text); font-family: var(--font-body); font-size: 14px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; -webkit-appearance: none; }
+  .form-group input::placeholder { color: var(--text-muted); }
+  .form-group input:focus, .form-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,212,255,0.1); }
+  .form-group select option { background: var(--bg2); }
+  .member-list { display: flex; flex-direction: column; gap: 8px; }
+  .member-input-wrap { display: flex; align-items: center; gap: 8px; }
+  .member-num { width: 28px; height: 28px; background: var(--bg2); border: 1px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
+  .btn-primary { width: 100%; background: linear-gradient(135deg, var(--accent2) 0%, var(--accent) 100%); border: none; border-radius: var(--radius-sm); padding: 13px; color: #fff; font-family: var(--font-head); font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 0.5rem; transition: opacity 0.2s, transform 0.15s; position: relative; overflow: hidden; }
+  .btn-primary::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent); transform: translateX(-100%); transition: transform 0.4s; }
+  .btn-primary:hover::after { transform: translateX(100%); }
+  .btn-primary:hover { opacity: 0.92; transform: translateY(-1px); }
+  .btn-primary:active { transform: scale(0.98); }
+  .error-msg { color: var(--danger); font-size: 12px; margin-top: 0.5rem; display: none; }
+  .error-msg.show { display: block; }
+
+  /* DOMAIN */
+  #page-domain { padding-top: 100px; padding-bottom: 3rem; }
+  .section-title { text-align: center; margin-bottom: 2.5rem; }
+  .step-tag { display: inline-block; background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.25); color: var(--accent); font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; padding: 4px 14px; border-radius: 999px; margin-bottom: 1rem; }
+  .section-title h2 { font-family: var(--font-head); font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 800; color: #fff; letter-spacing: -1px; line-height: 1.15; }
+  .section-title p { color: var(--text-dim); font-size: 14px; margin-top: 0.6rem; max-width: 480px; margin-left: auto; margin-right: auto; }
+  .domain-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; max-width: 920px; width: 100%; margin-bottom: 2rem; }
+  .domain-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; cursor: pointer; transition: border-color 0.2s, background 0.2s, transform 0.2s; text-align: center; position: relative; overflow: hidden; }
+  .domain-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent2), var(--accent)); transform: scaleX(0); transform-origin: left; transition: transform 0.3s; }
+  .domain-card:hover, .domain-card.selected { border-color: var(--border-hover); background: var(--card-hover); transform: translateY(-3px); }
+  .domain-card:hover::before, .domain-card.selected::before { transform: scaleX(1); }
+  .domain-card.selected { border-color: var(--accent); }
+  .domain-icon { font-size: 2.2rem; margin-bottom: 0.75rem; display: block; }
+  .domain-card h3 { font-family: var(--font-head); font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .domain-card p { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+  .check-mark { position: absolute; top: 12px; right: 12px; width: 22px; height: 22px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #000; opacity: 0; transform: scale(0.5); transition: opacity 0.2s, transform 0.2s; }
+  .domain-card.selected .check-mark { opacity: 1; transform: scale(1); }
+  .btn-confirm { background: linear-gradient(135deg, var(--accent2), var(--accent)); border: none; border-radius: var(--radius-sm); padding: 13px 40px; color: #fff; font-family: var(--font-head); font-size: 15px; font-weight: 700; cursor: pointer; transition: opacity 0.2s, transform 0.15s; opacity: 0.4; pointer-events: none; }
+  .btn-confirm.ready { opacity: 1; pointer-events: all; }
+  .btn-confirm:hover { opacity: 0.88; transform: translateY(-1px); }
+
+  /* PS PAGE */
+  #page-ps { padding-top: 100px; padding-bottom: 5rem; align-items: stretch; }
+  .ps-header { max-width: 1100px; margin: 0 auto 2rem; width: 100%; display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+  .ps-filters { display: flex; gap: 8px; flex-wrap: wrap; }
+  .filter-btn { background: var(--card); border: 1px solid var(--border); border-radius: 999px; padding: 6px 16px; font-size: 13px; color: var(--text-dim); cursor: pointer; transition: all 0.2s; font-family: var(--font-body); }
+  .filter-btn:hover { border-color: var(--border-hover); color: var(--text); }
+  .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 600; }
+  .ps-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem; max-width: 1100px; margin: 0 auto; width: 100%; }
+
+  /* STARTUP CARD */
+  .startup-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; display: flex; flex-direction: column; gap: 0.85rem; transition: border-color 0.25s, transform 0.25s, background 0.25s, box-shadow 0.25s; position: relative; overflow: hidden; }
+  .startup-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(0,212,255,0.04), transparent 60%); opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+  .startup-card:hover { border-color: var(--border-hover); background: var(--card-hover); transform: translateY(-4px); box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,212,255,0.15); }
+  .startup-card:hover::after { opacity: 1; }
+  .startup-card.premium { border-color: rgba(245,158,11,0.2); }
+  .startup-card.premium:hover { border-color: rgba(245,158,11,0.5); box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(245,158,11,0.2); }
+  .startup-card.premium::after { background: linear-gradient(135deg, rgba(245,158,11,0.05), transparent 60%); }
+  .startup-card.invested { opacity: 0.55; pointer-events: none; }
+
+  .invested-ribbon { display: none; position: absolute; top: 14px; right: -28px; background: var(--success); color: #fff; font-size: 9px; font-weight: 700; letter-spacing: 1.2px; padding: 4px 36px; transform: rotate(45deg); text-transform: uppercase; }
+  .startup-card.invested .invested-ribbon { display: block; }
+
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .ps-id { font-size: 11px; color: var(--text-muted); font-weight: 500; letter-spacing: 0.5px; font-family: var(--font-head); }
+  .badge { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; }
+  .badge-normal { background: rgba(0,212,255,0.1); color: var(--accent); border: 1px solid rgba(0,212,255,0.25); }
+  .badge-premium { background: rgba(245,158,11,0.12); color: var(--premium); border: 1px solid rgba(245,158,11,0.3); }
+  .card-title { font-family: var(--font-head); font-size: 1rem; font-weight: 700; color: #fff; line-height: 1.3; }
+  .card-desc { font-size: 13px; color: var(--text-dim); line-height: 1.65; }
+
+  .card-details { display: none; flex-direction: column; gap: 10px; border-top: 1px solid var(--border); padding-top: 0.85rem; }
+  .startup-card.expanded .card-details { display: flex; }
+  .detail-row { display: flex; gap: 10px; align-items: flex-start; }
+  .detail-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .detail-content .detail-label { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px; }
+  .detail-content .detail-text { font-size: 12px; color: var(--text-dim); line-height: 1.55; }
+
+  .card-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 0.75rem; border-top: 1px solid var(--border); gap: 8px; margin-top: auto; }
+  .price-block { display: flex; flex-direction: column; }
+  .price-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
+  .price-value { font-family: var(--font-head); font-size: 1.1rem; font-weight: 800; color: #fff; }
+  .price-value.premium-price { color: var(--premium); }
+  .card-actions { display: flex; gap: 8px; align-items: center; }
+  .btn-expand { background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 7px 12px; color: var(--text-muted); font-size: 12px; cursor: pointer; transition: all 0.2s; font-family: var(--font-body); }
+  .btn-expand:hover { border-color: var(--border-hover); color: var(--text); }
+  .startup-card.expanded .btn-expand { border-color: var(--accent); color: var(--accent); }
+  .btn-invest { background: transparent; border: 1px solid var(--accent); border-radius: var(--radius-sm); padding: 8px 18px; color: var(--accent); font-family: var(--font-head); font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.2s, color 0.2s, transform 0.15s, box-shadow 0.2s; white-space: nowrap; }
+  .btn-invest:hover { background: var(--accent); color: #000; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,212,255,0.3); }
+  .btn-invest:active { transform: scale(0.96); }
+  .btn-invest.premium-btn { border-color: var(--premium); color: var(--premium); }
+  .btn-invest.premium-btn:hover { background: var(--premium); color: #000; box-shadow: 0 4px 20px rgba(245,158,11,0.3); }
+
+  /* WALLET BAR */
+  .wallet-bar { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: rgba(10,22,40,0.95); backdrop-filter: blur(20px); border: 1px solid rgba(245,158,11,0.3); border-radius: 999px; padding: 10px 24px; display: flex; align-items: center; gap: 16px; z-index: 200; white-space: nowrap; }
+  .wallet-bar .wlabel { font-size: 12px; color: var(--text-muted); }
+  .wallet-bar .wamount { font-family: var(--font-head); font-size: 1.05rem; font-weight: 800; color: var(--premium); }
+  .wallet-divider { width: 1px; height: 20px; background: var(--border); }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(5,13,26,0.85); backdrop-filter: blur(8px); z-index: 500; display: none; align-items: center; justify-content: center; padding: 1rem; }
+  .modal-overlay.show { display: flex; animation: fadeUp 0.3s ease; }
+  .modal { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem; max-width: 440px; width: 100%; }
+  .modal h3 { font-family: var(--font-head); font-size: 1.2rem; font-weight: 800; color: #fff; margin-bottom: 4px; line-height: 1.3; }
+  .modal-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 1.25rem; }
+  .modal-detail-box { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; margin-bottom: 1.25rem; }
+  .mdr { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .mdr:last-child { border-bottom: none; }
+  .mdr .mkey { color: var(--text-muted); }
+  .mdr .mval { font-weight: 600; color: #fff; }
+  .mdr .mval.a { color: var(--accent); }
+  .mdr .mval.g { color: var(--success); }
+  .mdr .mval.am { color: var(--premium); }
+  .modal-desc { font-size: 13px; color: var(--text-dim); line-height: 1.6; margin-bottom: 1.25rem; }
+  .modal-actions { display: flex; gap: 10px; }
+  .btn-cancel { flex: 1; background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; color: var(--text-dim); font-family: var(--font-body); font-size: 14px; cursor: pointer; transition: border-color 0.2s; }
+  .btn-cancel:hover { border-color: var(--border-hover); color: var(--text); }
+  .btn-confirm-invest { flex: 1; background: linear-gradient(135deg, var(--accent2), var(--accent)); border: none; border-radius: var(--radius-sm); padding: 10px; color: #fff; font-family: var(--font-head); font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+  .btn-confirm-invest:hover { opacity: 0.88; }
+  .btn-confirm-invest.pi { background: linear-gradient(135deg, #92400e, var(--premium)); }
+
+  /* SUCCESS */
+  .success-splash { text-align: center; max-width: 460px; }
+  .big-icon { font-size: 4rem; margin-bottom: 1rem; animation: bounce 0.6s ease; display: block; }
+  @keyframes bounce { 0% { transform: scale(0.5); } 70% { transform: scale(1.15); } 100% { transform: scale(1); } }
+  .success-splash h2 { font-family: var(--font-head); font-size: 2rem; font-weight: 800; color: #fff; letter-spacing: -1px; margin-bottom: 0.5rem; }
+  .wallet-added { display: inline-flex; align-items: center; gap: 8px; background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); border-radius: 999px; padding: 10px 24px; margin: 1.5rem 0; font-family: var(--font-head); font-size: 1.4rem; font-weight: 800; color: var(--premium); }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 5.5rem; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--bg3); border: 1px solid var(--border); border-radius: 999px; padding: 10px 20px; font-size: 13px; color: var(--text); z-index: 999; opacity: 0; transition: opacity 0.3s, transform 0.3s; white-space: nowrap; max-width: 90vw; overflow: hidden; text-overflow: ellipsis; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: rgba(16,185,129,0.4); color: var(--success); }
+  .toast.error { border-color: rgba(239,68,68,0.4); color: var(--danger); }
+  .empty-state { color: var(--text-muted); font-size: 14px; padding: 3rem; text-align: center; width: 100%; }
+
+  @media (max-width: 600px) {
+    .form-row { grid-template-columns: 1fr; }
+    .ps-grid { grid-template-columns: 1fr; }
+    .domain-grid { grid-template-columns: 1fr 1fr; }
+    .ps-header { flex-direction: column; align-items: flex-start; }
+    .wallet-bar { font-size: 12px; padding: 8px 14px; gap: 10px; }
+    .wallet-bar .wamount { font-size: 0.9rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<!-- TOPBAR -->
+<div class="topbar" id="topbar" style="display:none">
+  <div class="topbar-logo">Pitcher<span>Perfect</span> <span style="font-size:10px;color:var(--text-muted);font-weight:400;margin-left:6px">by IEEE</span></div>
+  <div class="team-info-pill">
+    <div class="team-dot" id="topbar-initials">TM</div>
+    <span id="topbar-team"></span>
+  </div>
+  <div class="wallet-pill" id="topbar-wallet" style="display:none">
+    <span>💰</span><span id="topbar-balance">₹10,000</span>
+  </div>
+</div>
+
+<!-- PAGE 1: LOGIN -->
+<div class="page active" id="page-login">
+  <div class="login-wrap">
+    <div class="brand-mark">
+      <div class="ieee-badge">⚡ IEEE Event</div>
+      <h1>Pitcher<br><span class="grad">Perfect</span></h1>
+      <p>Register your team and begin the entrepreneurship challenge</p>
+    </div>
+    <div class="login-card">
+      <h2>Team Registration</h2>
+      <div class="form-row">
+        <div class="form-group"><label>Team ID</label><input type="text" id="team-id" placeholder="e.g. PP-042" maxlength="12" /></div>
+        <div class="form-group"><label>Team Name</label><input type="text" id="team-name" placeholder="Your team name" /></div>
+      </div>
+      <div class="form-group"><label>Institution / College</label><input type="text" id="college" placeholder="e.g. SVNIT Surat" /></div>
+      <div class="form-group">
+        <label>Number of Members</label>
+        <select id="member-count" onchange="updateMemberFields()">
+          <option value="">Select count</option>
+          <option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="form-group" id="members-section" style="display:none">
+        <label>Member Names</label>
+        <div class="member-list" id="member-list"></div>
+      </div>
+      <div class="form-group"><label>Team Leader Email</label><input type="email" id="leader-email" placeholder="leader@email.com" /></div>
+      <div class="error-msg" id="login-error"></div>
+      <button class="btn-primary" onclick="handleLogin()">Register &amp; Enter →</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 2: SUCCESS -->
+<div class="page" id="page-success">
+  <div class="success-splash">
+    <span class="big-icon">🚀</span>
+    <h2>Welcome aboard,<br><span id="success-team-name" style="background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text"></span>!</h2>
+    <p style="color:var(--text-dim)">Your team has been registered successfully.</p>
+    <div class="wallet-added">💰 ₹10,000 added to your wallet</div>
+    <p style="color:var(--text-muted);font-size:13px">Virtual investment budget to select your problem statement</p>
+    <button class="btn-primary" style="margin-top:2rem;max-width:280px;margin-left:auto;margin-right:auto" onclick="goToDomain()">Choose Your Domain →</button>
+  </div>
+</div>
+
+<!-- PAGE 3: DOMAIN -->
+<div class="page" id="page-domain">
+  <div class="section-title">
+    <div class="step-tag">Step 2 of 3</div>
+    <h2>Select Your Domain</h2>
+    <p>Choose the industry vertical that aligns with your team's expertise</p>
+  </div>
+  <div class="domain-grid" id="domain-grid"></div>
+  <button class="btn-confirm" id="btn-confirm-domain" onclick="confirmDomain()">Confirm Domain →</button>
+</div>
+
+<!-- PAGE 4: PROBLEM STATEMENTS -->
+<div class="page" id="page-ps" style="align-items:flex-start">
+  <div class="ps-header">
+    <div style="text-align:left">
+      <div class="step-tag" style="margin-bottom:0.5rem">Step 3 of 3</div>
+      <h2 id="ps-domain-title" style="font-family:var(--font-head);font-size:1.6rem;font-weight:800;color:#fff;letter-spacing:-0.5px">Problem Statements</h2>
+      <p id="ps-domain-sub" style="font-size:13px;color:var(--text-dim);margin-top:4px">Invest your budget into a startup idea</p>
+    </div>
+    <div class="ps-filters">
+      <button class="filter-btn active" onclick="filterPS('all',this)">All</button>
+      <button class="filter-btn" onclick="filterPS('normal',this)">Normal</button>
+      <button class="filter-btn" onclick="filterPS('premium',this)">⭐ Premium</button>
+    </div>
+  </div>
+  <div class="ps-grid" id="ps-grid"></div>
+  <div class="wallet-bar">
+    <span class="wlabel">Wallet</span><span class="wamount" id="wallet-display">₹10,000</span>
+    <div class="wallet-divider"></div>
+    <span class="wlabel">Invested</span><span class="wamount" id="invested-display" style="color:var(--accent)">₹0</span>
+    <div class="wallet-divider"></div>
+    <span class="wlabel">Remaining</span><span class="wamount" id="remaining-display" style="color:var(--success)">₹10,000</span>
+  </div>
+</div>
+
+<!-- INVEST MODAL -->
+<div class="modal-overlay" id="invest-modal">
+  <div class="modal">
+    <h3 id="modal-title"></h3>
+    <div class="modal-sub" id="modal-sub"></div>
+    <div class="modal-detail-box">
+      <div class="mdr"><span class="mkey">PS ID</span><span class="mval" id="modal-ps-id"></span></div>
+      <div class="mdr"><span class="mkey">Base Price</span><span class="mval a" id="modal-price"></span></div>
+      <div class="mdr"><span class="mkey">Your Balance</span><span class="mval g" id="modal-balance"></span></div>
+      <div class="mdr"><span class="mkey">After Investment</span><span class="mval am" id="modal-after"></span></div>
+    </div>
+    <div class="modal-desc" id="modal-desc"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-confirm-invest" id="modal-invest-btn" onclick="confirmInvest()">Confirm Invest</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const WALLET_START = 10000;
+
+const DOMAINS = [
+  { id:'design',   icon:'👗', name:'Design & Fashion',  desc:'Sustainable fashion, customisation platforms, designer marketplaces' },
+  { id:'fintech',  icon:'💳', name:'Fintech',           desc:'Smart contracts, savings, insurance, fraud protection & micro-finance' },
+  { id:'sustech',  icon:'♻️', name:'Sustainable Tech',  desc:'Upcycling, fabric recycling, clothing exchange & green energy' },
+  { id:'health',   icon:'🏥', name:'Healthtech',        desc:'AI mental health, medicine reminders & portable health kiosks' },
+  { id:'travel',   icon:'✈️', name:'Travel & Tourism',  desc:'Local experiences, tourist ride-sharing & unified transport apps' },
+  { id:'edtech',   icon:'🎓', name:'Edtech',            desc:'Career exploration, study abroad guidance & adaptive learning' },
+];
+
+const ALL_PS = [
+  /* Design & Fashion */
+  { id:'DF-01', domain:'design',  premium:false, price:1500,
+    title:'Lack of Affordable Sustainable Fashion',
+    desc:'Users browse, rent, and return clothes for events, reducing waste and saving money.',
+    constraint:'Logistics (cleaning, delivery, and returns) can be expensive and complex.',
+    advantage:'A popular fashion influencer promotes your platform, bringing a sudden spike in users and brand trust.',
+    disadvantage:'Users hesitate due to cleanliness concerns, and a negative review about hygiene affects trust.' },
+  { id:'DF-02', domain:'design',  premium:false, price:1200,
+    title:'Small Designers Struggle to Get Visibility',
+    desc:'Connects emerging designers directly to buyers without middlemen.',
+    constraint:'Building trust and ensuring product quality consistency.',
+    advantage:'Support or recognition under a "vocal for local" initiative boosts visibility and funding chances.',
+    disadvantage:'Big platforms start promoting indie creators with better reach, pulling your users away.' },
+  { id:'DF-03', domain:'design',  premium:true,  price:2500,
+    title:'Lack of Customization in Affordable Fashion',
+    desc:'Online platform where users tweak designs before production — personalized style at scale.',
+    constraint:'Production time is longer than ready-made clothes.',
+    advantage:'AI suggests perfect size and fit based on body input, reducing returns and improving comfort.',
+    disadvantage:'Customized orders take longer to produce, and customers cancel due to slow delivery.' },
+
+  /* Fintech */
+  { id:'FT-01', domain:'fintech', premium:false, price:1500,
+    title:'Smart Contract-Based Freelance Payments',
+    desc:'A platform using smart contracts to ensure automatic payment release once work conditions are verified — no intermediaries needed.',
+    constraint:'Requires blockchain infrastructure and technical implementation.',
+    advantage:'Companies use your platform for contract-based hiring due to transparency and reduced legal/payment risks.',
+    disadvantage:'Smart contracts struggle with subjective disputes ("work not satisfactory") without human intervention.' },
+  { id:'FT-02', domain:'fintech', premium:true,  price:2500,
+    title:'Smart EMI Optimizer',
+    desc:'Analyzes a user\'s loans and suggests the most efficient EMI structure — adjusting tenure, interest, and repayment strategy to minimize total cost.',
+    constraint:'Requires integration with financial institutions.',
+    advantage:'Banks integrate your system for "smart EMI plans," auto-adjusting via partner banks — effortless for users.',
+    disadvantage:'Users hesitate to rely on automated financial advice, especially for large loans.' },
+  { id:'FT-03', domain:'fintech', premium:false, price:1000,
+    title:'Goal-Based Micro Saving with Lock System',
+    desc:'Users set financial goals (travel, gadgets) and money is locked until the goal is achieved — preventing impulsive withdrawals.',
+    constraint:'Funds are not easily accessible before goal completion.',
+    advantage:'Milestones, rewards, and streaks make saving feel like a game, increasing engagement.',
+    disadvantage:'Users face emergencies and get frustrated due to locked funds, leading to negative feedback.' },
+  { id:'FT-04', domain:'fintech', premium:false, price:1000,
+    title:'Scam Awareness + Protection App',
+    desc:'A real-time financial safety app that detects fraudulent transactions, suspicious links, and scam activities, while educating users.',
+    constraint:'Requires real-time monitoring permissions from users.',
+    advantage:'Instantly blocking a fraudulent transaction builds strong trust and word-of-mouth growth.',
+    disadvantage:'Banks and payment apps introduce their own fraud detection, reducing need for a separate app.' },
+  { id:'FT-05', domain:'fintech', premium:false, price:1200,
+    title:'Peer-to-Peer Insurance Pool',
+    desc:'A community-based insurance system where users contribute to a shared pool and claims are settled collectively — transparent and decentralized.',
+    constraint:'Requires strong trust and broad participation to remain viable.',
+    advantage:'Specific groups (students, gig workers) adopt it widely, creating strong initial traction.',
+    disadvantage:'Multiple simultaneous claims (e.g., during a disaster) drain the pool and create financial instability.' },
+
+  /* Sustainable Tech */
+  { id:'ST-01', domain:'sustech', premium:false, price:1000,
+    title:'AI Upcycling Platform',
+    desc:'AI suggests how to redesign old clothes — DIY or via local tailors. Textile waste gets a second life.',
+    constraint:'A skilled tailoring network must be built to deliver results.',
+    advantage:'Stylish redesign ideas (jeans into bags/jackets) make it fun and shareable on social media.',
+    disadvantage:'AI gives good ideas, but final products may not match expectations due to tailor skill differences.' },
+  { id:'ST-02', domain:'sustech', premium:true,  price:3000,
+    title:'Smart Fabric Recycling Machine',
+    desc:'A compact machine that converts old clothes into reusable fabric or yarn — placed in malls, campuses, or local centres.',
+    constraint:'Machine is expensive to build and deploy, limiting early scalability.',
+    advantage:'Malls/campuses install the machine for instant recycling — strong "experience factor." Outputs ready-to-use products like tote bags.',
+    disadvantage:'High hardware cost makes rapid scaling very difficult in early stages.' },
+  { id:'ST-03', domain:'sustech', premium:false, price:800,
+    title:'Clothing Exchange Platform',
+    desc:'Users exchange clothes using a credit system — give one, get one. No money needed.',
+    constraint:'Quality control and logistics are major operational challenges.',
+    advantage:'Users get "new" clothes for free, strongly attracting students and budget-conscious users.',
+    disadvantage:'Users hesitate due to concerns about cleanliness or condition of exchanged clothes.' },
+  { id:'ST-04', domain:'sustech', premium:false, price:900,
+    title:'QR Sustainability Tracker',
+    desc:'QR codes on garments reveal carbon footprint and fabric sourcing info to conscious buyers.',
+    constraint:'Needs brand partnerships to reach meaningful scale.',
+    advantage:'Buyers start preferring brands with visible sustainability data, driving QR adoption.',
+    disadvantage:'Smaller brands hesitate due to additional tracking and verification costs.' },
+  { id:'ST-05', domain:'sustech', premium:false, price:1100,
+    title:'Solar Charging Public Benches',
+    desc:'Solar-powered public benches with built-in charging ports installed in parks, bus stops, and public areas.',
+    constraint:'Installation cost and ongoing maintenance are significant challenges.',
+    advantage:'Municipal corporations install benches as part of smart city initiatives, accelerating deployment.',
+    disadvantage:'Low sunlight during monsoons or cloudy days reduces charging efficiency significantly.' },
+
+  /* Healthtech */
+  { id:'HT-01', domain:'health',  premium:false, price:1200,
+    title:'AI Mental Health Companion',
+    desc:'A mobile app tracking mood, stress, and daily behaviour using AI — providing personalised suggestions, meditation, and chatbot support.',
+    constraint:'Accuracy depends on user input; privacy concerns are significant for sensitive data.',
+    advantage:'Growing openness about mental health increases adoption of your app significantly.',
+    disadvantage:'Existing apps with strong branding and expert backing already dominate the space.' },
+  { id:'HT-02', domain:'health',  premium:false, price:1000,
+    title:'Smart Medicine Reminder System',
+    desc:'A smart pillbox connected to a mobile app that reminds users to take medicines and tracks missed doses.',
+    constraint:'Requires device setup and may be too costly for some users.',
+    advantage:'Doctors recommend the pillbox for patients with long-term prescriptions, boosting adoption.',
+    disadvantage:'Device failure or battery drain can disrupt reminders and reduce reliability and trust.' },
+  { id:'HT-03', domain:'health',  premium:true,  price:2500,
+    title:'Portable Health Check Kiosk',
+    desc:'A compact machine placed in colleges, malls, or villages that measures BP, heart rate, oxygen level, and temperature — with instant AI-generated reports.',
+    constraint:'Initial setup cost and regular maintenance required for each kiosk.',
+    advantage:'Health initiatives fund kiosks in public areas. AI gives early risk predictions (heart risk, stress level), not just raw data.',
+    disadvantage:'Users doubt readings compared to hospital-grade equipment, reducing trust in the device.' },
+
+  /* Travel & Tourism */
+  { id:'TT-01', domain:'travel',  premium:true,  price:2000,
+    title:'Local Experience Marketplace',
+    desc:'Connects travellers with local hosts to discover authentic experiences — food tours, cultural activities, and hidden spots for a truly immersive journey.',
+    constraint:'Ensuring consistent quality and safety across all hosts is a major challenge.',
+    advantage:'Unique experiences go viral on reels. Platform creates full travel plans based on user preferences.',
+    disadvantage:'Big travel platforms may introduce similar "local experiences" features with far greater reach.' },
+  { id:'TT-02', domain:'travel',  premium:false, price:1000,
+    title:'Smart Ride Sharing for Tourists',
+    desc:'Connects tourists heading in the same direction to share rides, reduce costs, and make travel more convenient and social.',
+    constraint:'Ensuring safety and trust between unknown travellers is the core challenge.',
+    advantage:'AI matches tourists going to the same destination (airport, attractions), making travel smoother.',
+    disadvantage:'Tourists hesitate to share rides with strangers due to safety and security concerns.' },
+  { id:'TT-03', domain:'travel',  premium:false, price:900,
+    title:'Local Transport Pass App',
+    desc:'A unified app providing access to multiple local transport services (bus, metro, rentals) through a single digital pass.',
+    constraint:'Integration with different transport systems and regulations can be complex.',
+    advantage:'City transport authorities partner for digital ticketing, boosting scale and credibility.',
+    disadvantage:'Cities or large apps may launch their own unified transport systems, reducing your differentiation.' },
+
+  /* Edtech */
+  { id:'ET-01', domain:'edtech',  premium:true,  price:2000,
+    title:'Career Exploration Platform',
+    desc:'Short documentaries, real-life career stories, and interactive paths so students understand what a career actually feels like — not just what it sounds like.',
+    constraint:'High-quality content production is time-consuming and requires consistent storytelling standards.',
+    advantage:'Institutions adopt the platform for career guidance. Interactive simulations let students experience career decisions virtually.',
+    disadvantage:'Career guidance apps and YouTube already offer similar content, reducing your uniqueness.' },
+  { id:'ET-02', domain:'edtech',  premium:false, price:1000,
+    title:'Study Abroad Guidance Platform',
+    desc:'Transparent guidance, university matching, SOP assistance, and scholarship tracking — at a fraction of consultancy cost.',
+    constraint:'Requires constantly updated international data and strong credibility to compete with established players.',
+    advantage:'Students prefer your platform over expensive consultants, driving organic adoption through word-of-mouth.',
+    disadvantage:'Established consultancies offer offline support and personal guidance, drawing users who want a human touch.' },
+];
+
+/* STATE */
+let state = { team:null, wallet:WALLET_START, invested:0, selectedDomain:null, investedPS:new Set(), pendingPS:null };
+
+/* NAV */
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const pg = document.getElementById('page-'+id);
+  pg.classList.add('active');
+  pg.style.animation='none'; pg.offsetHeight; pg.style.animation='';
+  window.scrollTo(0,0);
+}
+
+/* LOGIN */
+function updateMemberFields() {
+  const n = parseInt(document.getElementById('member-count').value)||0;
+  const sec = document.getElementById('members-section');
+  const list = document.getElementById('member-list');
+  if(!n){sec.style.display='none';return;}
+  sec.style.display='block';
+  list.innerHTML='';
+  for(let i=1;i<=n;i++) list.innerHTML+=`<div class="member-input-wrap"><div class="member-num">${i}</div><input type="text" class="member-inp" placeholder="Member ${i} full name" style="flex:1"/></div>`;
+}
+
+function handleLogin() {
+  const v = id => document.getElementById(id).value.trim();
+  const teamId=v('team-id'), teamName=v('team-name'), college=v('college'), email=v('leader-email');
+  const count=parseInt(document.getElementById('member-count').value)||0;
+  const minps=Array.from(document.querySelectorAll('.member-inp'));
+  const err=document.getElementById('login-error');
+  if(!teamId||!teamName||!college||!email||!count||!minps.every(i=>i.value.trim())){
+    err.textContent='Please fill all required fields.'; err.classList.add('show'); return;
+  }
+  if(!/\S+@\S+\.\S+/.test(email)){
+    err.textContent='Please enter a valid email address.'; err.classList.add('show'); return;
+  }
+  err.classList.remove('show');
+  state.team={id:teamId,name:teamName,college,email,members:minps.map(i=>i.value.trim())};
+  state.wallet=WALLET_START; state.invested=0;
+  document.getElementById('success-team-name').textContent=teamName;
+  showPage('success');
+}
+
+/* DOMAIN */
+function goToDomain() {
+  document.getElementById('topbar').style.display='flex';
+  const init=(state.team.members[0]||state.team.name).split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('topbar-initials').textContent=init;
+  document.getElementById('topbar-team').textContent=state.team.id+' · '+state.team.name;
+  document.getElementById('domain-grid').innerHTML=DOMAINS.map(d=>`
+    <div class="domain-card" id="dc-${d.id}" onclick="selectDomain('${d.id}')">
+      <div class="check-mark">✓</div>
+      <span class="domain-icon">${d.icon}</span>
+      <h3>${d.name}</h3><p>${d.desc}</p>
+    </div>`).join('');
+  showPage('domain');
+}
+
+function selectDomain(id) {
+  document.querySelectorAll('.domain-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('dc-'+id).classList.add('selected');
+  state.selectedDomain=id;
+  document.getElementById('btn-confirm-domain').classList.add('ready');
+}
+
+function confirmDomain() {
+  if(!state.selectedDomain) return;
+  const d=DOMAINS.find(x=>x.id===state.selectedDomain);
+  document.getElementById('ps-domain-title').textContent=d.icon+' '+d.name;
+  document.getElementById('ps-domain-sub').textContent='Invest your ₹10,000 virtual budget into a problem statement that excites your team';
+  document.getElementById('topbar-wallet').style.display='flex';
+  updateWalletDisplay();
+  buildPSGrid('all');
+  document.querySelectorAll('.filter-btn').forEach((b,i)=>{b.classList.toggle('active',i===0);});
+  showPage('ps');
+}
+
+/* PS GRID */
+let currentFilter='all';
+function buildPSGrid(filter) {
+  if(filter) currentFilter=filter;
+  let list=ALL_PS.filter(ps=>ps.domain===state.selectedDomain);
+  if(currentFilter==='normal')  list=list.filter(ps=>!ps.premium);
+  if(currentFilter==='premium') list=list.filter(ps=> ps.premium);
+  const grid=document.getElementById('ps-grid');
+  if(!list.length){grid.innerHTML='<div class="empty-state">No problem statements match this filter.</div>';return;}
+  grid.innerHTML=list.map(ps=>{
+    const inv=state.investedPS.has(ps.id);
+    return `<div class="startup-card${ps.premium?' premium':''}${inv?' invested':''}" id="card-${ps.id}">
+      <div class="invested-ribbon">Invested</div>
+      <div class="card-top">
+        <span class="ps-id">${ps.id}</span>
+        <span class="badge ${ps.premium?'badge-premium':'badge-normal'}">${ps.premium?'⭐ Premium':'Normal'}</span>
+      </div>
+      <div class="card-title">${ps.title}</div>
+      <div class="card-desc">${ps.desc}</div>
+      <div class="card-details">
+        <div class="detail-row"><span class="detail-icon">⚠️</span><div class="detail-content"><div class="detail-label">Constraint</div><div class="detail-text">${ps.constraint}</div></div></div>
+        <div class="detail-row"><span class="detail-icon">✅</span><div class="detail-content"><div class="detail-label">Advantage</div><div class="detail-text">${ps.advantage}</div></div></div>
+        <div class="detail-row"><span class="detail-icon">❌</span><div class="detail-content"><div class="detail-label">Disadvantage</div><div class="detail-text">${ps.disadvantage}</div></div></div>
+      </div>
+      <div class="card-footer">
+        <div class="price-block">
+          <span class="price-label">Base Price</span>
+          <span class="price-value${ps.premium?' premium-price':''}">₹${ps.price.toLocaleString('en-IN')}</span>
+        </div>
+        <div class="card-actions">
+          <button class="btn-expand" onclick="toggleExpand('${ps.id}',this)">Details</button>
+          ${inv
+            ? '<span style="font-size:12px;color:var(--success);font-weight:600">✓ Invested</span>'
+            : `<button class="btn-invest${ps.premium?' premium-btn':''}" onclick="openModal('${ps.id}')">Invest →</button>`}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleExpand(id,btn){
+  const c=document.getElementById('card-'+id);
+  c.classList.toggle('expanded');
+  btn.textContent=c.classList.contains('expanded')?'Hide':'Details';
+}
+
+function filterPS(type,btn){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  buildPSGrid(type);
+}
+
+/* MODAL */
+function openModal(psId){
+  const ps=ALL_PS.find(p=>p.id===psId);
+  if(!ps) return;
+  if(state.wallet<ps.price){showToast('Insufficient wallet balance!','error');return;}
+  state.pendingPS=psId;
+  document.getElementById('modal-title').textContent=ps.title;
+  document.getElementById('modal-sub').textContent=ps.id+' · '+(ps.premium?'⭐ Premium':'Normal');
+  document.getElementById('modal-ps-id').textContent=ps.id;
+  document.getElementById('modal-price').textContent='₹'+ps.price.toLocaleString('en-IN');
+  document.getElementById('modal-balance').textContent='₹'+state.wallet.toLocaleString('en-IN');
+  document.getElementById('modal-after').textContent='₹'+(state.wallet-ps.price).toLocaleString('en-IN');
+  document.getElementById('modal-desc').textContent=ps.desc;
+  document.getElementById('modal-invest-btn').className='btn-confirm-invest'+(ps.premium?' pi':'');
+  document.getElementById('invest-modal').classList.add('show');
+}
+function closeModal(){document.getElementById('invest-modal').classList.remove('show');state.pendingPS=null;}
+function confirmInvest(){
+  const ps=ALL_PS.find(p=>p.id===state.pendingPS);
+  if(!ps) return;
+  state.wallet-=ps.price; state.invested+=ps.price; state.investedPS.add(ps.id);
+  updateWalletDisplay(); closeModal(); buildPSGrid();
+  showToast('Invested ₹'+ps.price.toLocaleString('en-IN')+' in "'+ps.title+'"','success');
+}
+
+function updateWalletDisplay(){
+  const f=n=>'₹'+n.toLocaleString('en-IN');
+  document.getElementById('topbar-balance').textContent=f(state.wallet);
+  document.getElementById('wallet-display').textContent=f(WALLET_START);
+  document.getElementById('invested-display').textContent=f(state.invested);
+  document.getElementById('remaining-display').textContent=f(state.wallet);
+}
+
+/* TOAST */
+function showToast(msg,type){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast '+(type||''); t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+document.getElementById('invest-modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+</script>
+</body>
+</html>
