@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard — Pitcher Perfect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { padding: 40px; }
+    .admin-container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: rgba(20,20,20,0.8);
+      padding: 30px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { text-align: left; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    th { font-family: var(--font-head); color: var(--accent); }
+    .price-input { background: #000; border: 1px solid #333; color: #fff; padding: 6px; border-radius: 4px; width: 100px; }
+    .btn-update { background: var(--success); color: #000; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    .btn-update:hover { background: #fff; }
+  </style>
+</head>
+<body>
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  
+  <div class="admin-container" id="admin-login-page">
+    <h2>Admin Login</h2>
+    <div style="margin-top:20px; max-width:300px;">
+      <div class="form-group"><label>Email</label><input type="email" id="admin-email" placeholder="admin@email.com" /></div>
+      <div class="form-group"><label>Password</label><input type="password" id="admin-pwd" placeholder="Enter password" /></div>
+      <button class="btn-primary" onclick="handleAdminLogin()">Log In to Admin</button>
+      <div id="admin-error" style="color:#ff4444; margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <div class="admin-container" id="admin-dashboard-page" style="display:none;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h2>Live Idea Bids & Pricing</h2>
+      <button onclick="handleAdminLogout()" class="btn-primary" style="width:auto; padding:8px 16px;">Logout</button>
+    </div>
+    
+    <table id="ideas-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Domain</th>
+          <th>Title</th>
+          <th>Base Price</th>
+          <th>Highest Bid</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="ideas-body">
+        <tr><td colspan="6">Loading ideas...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module" src="admin.js"></script>
+</body>
+</html>
