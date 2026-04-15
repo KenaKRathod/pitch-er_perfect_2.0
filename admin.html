@@ -9,21 +9,41 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <style>
-    body { padding: 40px; }
+    body { padding: 40px 20px; }
     .admin-container {
       max-width: 900px;
       margin: 0 auto;
-      background: rgba(20,20,20,0.8);
+      background: var(--card);
+      backdrop-filter: blur(16px);
       padding: 30px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
     }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { text-align: left; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-    th { font-family: var(--font-head); color: var(--accent); }
-    .price-input { background: #000; border: 1px solid #333; color: #fff; padding: 6px; border-radius: 4px; width: 100px; }
-    .btn-update { background: var(--success); color: #000; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-    .btn-update:hover { background: #fff; }
+    .admin-container h2 { font-family: var(--font-head); color: #fff; margin-bottom: 20px; font-weight: 800; }
+    table { width: 100%; border-collapse: collapse; margin: 0; min-width: 600px; }
+    th, td { text-align: left; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+    th { font-family: var(--font-head); color: var(--accent); font-weight: 700; background: rgba(0,212,255,0.05); }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .price-input { background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: var(--radius-sm); width: 120px; outline: none; transition: border-color 0.2s; font-family: var(--font-body); }
+    .price-input:focus { border-color: var(--accent); }
+    .btn-update { background: transparent; color: var(--success); border: 1px solid var(--success); padding: 8px 16px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 700; transition: all 0.2s; font-family: var(--font-body); }
+    .btn-update:hover { background: var(--success); color: #000; box-shadow: 0 4px 15px rgba(16,185,129,0.3); transform: translateY(-1px); }
+
+    .btn-approve { background: transparent; color: #10b981; border: 1px solid #10b981; padding: 7px 14px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 700; font-size: 13px; transition: all 0.2s; font-family: var(--font-body); }
+    .btn-approve:hover:not(:disabled) { background: #10b981; color: #000; box-shadow: 0 4px 15px rgba(16,185,129,0.35); transform: translateY(-1px); }
+    .btn-approve:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-reject { background: transparent; color: #ef4444; border: 1px solid #ef4444; padding: 7px 14px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 700; font-size: 13px; transition: all 0.2s; font-family: var(--font-body); }
+    .btn-reject:hover:not(:disabled) { background: #ef4444; color: #fff; box-shadow: 0 4px 15px rgba(239,68,68,0.35); transform: translateY(-1px); }
+    .btn-reject:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .status-badge { display: inline-block; padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; }
+    .status-badge.pending  { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+    .status-badge.approved { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+    .status-badge.rejected { background: rgba(239,68,68,0.15);  color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+
+    .section-divider { border: none; border-top: 1px solid var(--border); margin: 30px 0; }
   </style>
 </head>
 <body>
@@ -41,26 +61,49 @@
   </div>
 
   <div class="admin-container" id="admin-dashboard-page" style="display:none;">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h2>Live Idea Bids & Pricing</h2>
-      <button onclick="handleAdminLogout()" class="btn-primary" style="width:auto; padding:8px 16px;">Logout</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+      <h2 style="margin-bottom:0">Pending Investment Requests</h2>
+      <button onclick="handleAdminLogout()" class="btn-outline">Logout</button>
+    </div>
+
+    <div class="table-responsive" style="margin-bottom: 40px;">
+      <table id="requests-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Idea (ID)</th>
+            <th>Bid Amount</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="requests-body">
+          <tr><td colspan="5">Loading requests...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+      <h2 style="margin-bottom:0">Live Idea Bids & Pricing</h2>
     </div>
     
-    <table id="ideas-table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Domain</th>
-          <th>Title</th>
-          <th>Base Price</th>
-          <th>Highest Bid</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="ideas-body">
-        <tr><td colspan="6">Loading ideas...</td></tr>
-      </tbody>
-    </table>
+    <div class="table-responsive">
+      <table id="ideas-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Domain</th>
+            <th>Title</th>
+            <th>Base Price</th>
+            <th>Highest Bid</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="ideas-body">
+          <tr><td colspan="6">Loading ideas...</td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <div class="toast" id="toast"></div>

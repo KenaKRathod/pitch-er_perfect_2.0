@@ -1,8 +1,8 @@
 import { 
   auth, db, 
   onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut,
-  collection, doc, getDoc, setDoc, onSnapshot, runTransaction
-} from './firebase-config.js';
+  collection, doc, getDoc, setDoc, onSnapshot, runTransaction, addDoc, serverTimestamp
+} from './.gitignore/firebase-config.js';
 
 const WALLET_START = 10000;
 
@@ -26,29 +26,48 @@ let state = {
   ideas: [] // Real-time from Firestore
 };
 
+let userUnsubscribe = null;
+
 /* FIREBASE AUTH LISTENER */
 onAuthStateChanged(auth, async (user) => {
   if (user) {
-    // Fetch user details from Firestore
-    const userDoc = await getDoc(doc(db, "users", user.uid));
-    if (userDoc.exists()) {
-      const data = userDoc.data();
-      state.user = { uid: user.uid, ...data };
-      state.wallet = data.wallet !== undefined ? data.wallet : WALLET_START;
-      state.investedPS = new Set(data.investedPS || []);
-      
-      // Calculate invested amount based on current DB wallet vs WALLET_START
-      state.invested = WALLET_START - state.wallet;
-      
-      showPage('success');
-      document.getElementById('success-team-name').textContent = data.name;
-    } else {
-      console.error("User doc not found!");
-      showToast('Error: User data not found.', 'error');
-      auth.signOut();
-    }
+    if (userUnsubscribe) userUnsubscribe();
+    let initialized = false;
+
+    userUnsubscribe = onSnapshot(doc(db, "users", user.uid), (userDoc) => {
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        state.user = { uid: user.uid, ...data };
+        state.wallet = data.wallet !== undefined ? data.wallet : WALLET_START;
+        state.investedPS = new Set(data.investedPS || []);
+        state.invested = WALLET_START - state.wallet;
+
+        if (!initialized) {
+          // First snapshot after login — navigate to success page
+          initialized = true;
+          showPage('success');
+          document.getElementById('success-team-name').textContent = data.name;
+          updateWalletDisplay();
+        } else {
+          // Subsequent real-time updates (e.g. admin approved investment)
+          updateWalletDisplay();
+          if (document.getElementById('page-ps').classList.contains('active')) {
+            buildPSGrid();
+          }
+          // If on success or login page, refresh the name too
+          if (document.getElementById('page-success').classList.contains('active')) {
+            document.getElementById('success-team-name').textContent = data.name;
+          }
+        }
+
+      } else {
+        console.error("User doc not found!");
+        showToast('Error: User data not found.', 'error');
+        auth.signOut();
+      }
+    });
   } else {
-    // Show login page
+    if (userUnsubscribe) { userUnsubscribe(); userUnsubscribe = null; }
     state.user = null;
     showPage('login');
   }
@@ -81,23 +100,40 @@ window.toggleAuthForm = function(type) {
   document.getElementById('auth-title').textContent = type === 'login' ? 'Log In' : 'Sign Up';
 };
 
+/* FRIENDLY FIREBASE ERROR MESSAGES */
+function getFirebaseErrorMessage(code) {
+  const messages = {
+    'auth/invalid-email':            '📧 Please enter a valid email address.',
+    'auth/user-disabled':            '⛔ This account has been disabled. Contact the event admin.',
+    'auth/user-not-found':           '🔍 No account found with this email. Please sign up first.',
+    'auth/wrong-password':           '🔑 Incorrect password. Please try again.',
+    'auth/invalid-credential':       '🔑 Invalid email or password. Please check and try again.',
+    'auth/email-already-in-use':     '📨 This email is already registered. Try logging in instead.',
+    'auth/weak-password':            '🔒 Password must be at least 6 characters.',
+    'auth/network-request-failed':   '🌐 Network error. Please check your internet connection.',
+    'auth/too-many-requests':        '⏳ Too many attempts. Please wait a moment and try again.',
+    'auth/popup-closed-by-user':     '❌ Sign-in popup was closed. Please try again.',
+  };
+  return messages[code] || '⚠️ Something went wrong. Please try again.';
+}
+
 window.handleLogin = async function() {
   const email = document.getElementById('login-email').value.trim();
   const pwd = document.getElementById('login-pwd').value.trim();
   const err = document.getElementById('login-error');
   
-  if(!email || !pwd) { err.textContent='Fill all fields.'; err.classList.add('show'); return; }
+  if(!email || !pwd) { err.textContent='📝 Please fill in all fields.'; err.classList.add('show'); return; }
   err.classList.remove('show');
   
+  const btn = document.querySelector('#login-form .btn-primary');
   try {
-    const btn = document.querySelector('#login-form .btn-primary');
     btn.textContent = 'Logging in...'; btn.disabled = true;
     await signInWithEmailAndPassword(auth, email, pwd);
-    btn.textContent = 'Log In →'; btn.disabled = false;
+    // onAuthStateChanged will handle the redirect
   } catch (error) {
-    document.querySelector('#login-form .btn-primary').textContent = 'Log In →';
-    document.querySelector('#login-form .btn-primary').disabled = false;
-    err.textContent = error.message; err.classList.add('show');
+    btn.textContent = 'Log In →'; btn.disabled = false;
+    err.textContent = getFirebaseErrorMessage(error.code);
+    err.classList.add('show');
   }
 };
 
@@ -108,11 +144,11 @@ window.handleSignup = async function() {
   const isTeam = document.getElementById('signup-isteam').checked;
   const err = document.getElementById('signup-error');
   
-  if(!name || !email || !pwd) { err.textContent='Fill all fields.'; err.classList.add('show'); return; }
+  if(!name || !email || !pwd) { err.textContent='📝 Please fill in all fields.'; err.classList.add('show'); return; }
   err.classList.remove('show');
   
+  const btn = document.querySelector('#signup-form .btn-primary');
   try {
-    const btn = document.querySelector('#signup-form .btn-primary');
     btn.textContent = 'Signing up...'; btn.disabled = true;
     
     // Create Firebase Auth user
@@ -126,11 +162,12 @@ window.handleSignup = async function() {
       investedPS: []
     });
     
+    // onAuthStateChanged will handle the redirect
     btn.textContent = 'Sign Up →'; btn.disabled = false;
   } catch (error) {
-    document.querySelector('#signup-form .btn-primary').textContent = 'Sign Up →';
-    document.querySelector('#signup-form .btn-primary').disabled = false;
-    err.textContent = error.message; err.classList.add('show');
+    btn.textContent = 'Sign Up →'; btn.disabled = false;
+    err.textContent = getFirebaseErrorMessage(error.code);
+    err.classList.add('show');
   }
 };
 
@@ -171,6 +208,10 @@ window.confirmDomain = function() {
   buildPSGrid('all');
   document.querySelectorAll('.filter-btn').forEach((b,i)=>{b.classList.toggle('active',i===0);});
   showPage('ps');
+};
+
+window.goBackToDomains = function() {
+  showPage('domain');
 };
 
 /* PS GRID */
@@ -260,39 +301,26 @@ window.confirmInvest = async function(){
   if(!ps || !state.user) return;
   
   const highestBid = ps.highestBid !== undefined ? ps.highestBid : ps.basePrice;
-  const userRef = doc(db, "users", state.user.uid);
   const btn = document.getElementById('modal-invest-btn');
-  btn.textContent = "Processing...";
+  btn.textContent = "Sending Request...";
   btn.disabled = true;
   
   try {
-    await runTransaction(db, async (transaction) => {
-      const userDoc = await transaction.get(userRef);
-      if (!userDoc.exists()) throw "User does not exist!";
-      
-      const newWallet = userDoc.data().wallet - highestBid;
-      if (newWallet < 0) throw "Insufficient funds in database!";
-      
-      const newInvestedPS = [...(userDoc.data().investedPS || []), ps.id];
-      
-      transaction.update(userRef, {
-        wallet: newWallet,
-        investedPS: newInvestedPS
-      });
-      
-      // Update local state proactively
-      state.wallet = newWallet;
-      state.invested = WALLET_START - state.wallet;
-      state.investedPS.add(ps.id);
+    await addDoc(collection(db, "investmentRequests"), {
+      userId: state.user.uid,
+      userName: state.user.name,
+      psId: ps.id,
+      psTitle: ps.title,
+      amount: highestBid,
+      status: "pending",
+      timestamp: serverTimestamp()
     });
     
-    updateWalletDisplay(); 
     closeModal(); 
-    buildPSGrid();
-    showToast('Invested ₹'+highestBid.toLocaleString('en-IN')+' in "'+ps.title+'"','success');
+    showToast('Investment request sent for "'+ps.title+'"','success');
   } catch (err) {
-    console.error("Investment failed: ", err);
-    showToast("Investment failed: " + err, "error");
+    console.error("Investment request failed: ", err);
+    showToast("Investment request failed: " + err.message, "error");
   } finally {
     btn.textContent = "Confirm Invest";
     btn.disabled = false;
