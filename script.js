@@ -1,10 +1,10 @@
 import { 
   auth, db, 
   onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut,
-  collection, doc, getDoc, setDoc, onSnapshot, runTransaction, addDoc, serverTimestamp
+  collection, doc, getDoc, setDoc, onSnapshot, runTransaction, addDoc, serverTimestamp, query, where
 } from './.gitignore/firebase-config.js';
 
-const WALLET_START = 10000;
+const WALLET_START = 100000;
 
 const DOMAINS = [
   { id:'design',   icon:'👗', name:'Design & Fashion',  desc:'Sustainable fashion, customisation platforms, designer marketplaces' },
@@ -30,6 +30,7 @@ let state = {
 };
 
 let userUnsubscribe = null;
+let ideasUnsubscribe = null;
 
 /* Clear any persisted Firebase session on fresh page load so the user
    always starts at the login screen rather than being auto-redirected. */
@@ -79,14 +80,6 @@ onAuthStateChanged(auth, async (user) => {
     // Don't redirect to login on the initial signOut(auth) that clears persisted sessions
     if (!state.intentionalLogin) return;
     showPage('login');
-  }
-});
-
-/* FIREBASE REAL-TIME IDEAS LISTENER */
-onSnapshot(collection(db, "ideas"), (snapshot) => {
-  state.ideas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  if (document.getElementById('page-ps').classList.contains('active')) {
-    buildPSGrid();
   }
 });
 
@@ -228,10 +221,22 @@ window.confirmDomain = function() {
   updateWalletDisplay();
   document.querySelectorAll('.filter-btn').forEach((b, i) => { b.classList.toggle('active', i === 0); });
 
-  // Show page FIRST so page-ps is active, then build grid.
-  // This ensures the ideas snapshot listener correctly detects the active page.
   showPage('ps');
-  buildPSGrid('all');
+
+  const grid = document.getElementById('ps-grid');
+  grid.innerHTML = '<div class="empty-state">⏳ Loading ideas from database...</div>';
+
+  if (ideasUnsubscribe) {
+    ideasUnsubscribe();
+  }
+
+  const q = query(collection(db, "ideas"), where("domain", "==", state.selectedDomain));
+  ideasUnsubscribe = onSnapshot(q, (snapshot) => {
+    state.ideas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    if (document.getElementById('page-ps').classList.contains('active')) {
+      buildPSGrid('all');
+    }
+  });
 };
 
 window.goBackToDomains = function() {
@@ -242,7 +247,7 @@ window.goBackToDomains = function() {
 let currentFilter = 'all';
 window.buildPSGrid = function(filter) {
   if (filter) currentFilter = filter;
-  let list = state.ideas.filter(ps => ps.domain === state.selectedDomain);
+  let list = state.ideas;
   if (currentFilter === 'normal')  list = list.filter(ps => !ps.premium);
   if (currentFilter === 'premium') list = list.filter(ps =>  ps.premium);
 
@@ -260,8 +265,9 @@ window.buildPSGrid = function(filter) {
   grid.innerHTML = list.map(ps => {
     const inv        = state.investedPS.has(ps.id);
     const highestBid = ps.highestBid !== undefined ? ps.highestBid : ps.basePrice;
+    const boughtByOther = ps.isBought && !inv;
 
-    return `<div class="startup-card${ps.premium ? ' premium' : ''}${inv ? ' invested' : ''}" id="card-${ps.id}">
+    return `<div class="startup-card${ps.premium ? ' premium' : ''}${inv ? ' invested' : ''}${boughtByOther ? ' bought-out' : ''}" id="card-${ps.id}">
       <div class="invested-ribbon">Invested</div>
       <div class="card-top">
         <span class="ps-id">${ps.id}</span>
@@ -284,6 +290,8 @@ window.buildPSGrid = function(filter) {
           <button class="btn-expand" onclick="toggleExpand('${ps.id}',this)">Details</button>
           ${inv
             ? '<span style="font-size:12px;color:var(--success);font-weight:600">✓ Invested</span>'
+            : boughtByOther
+            ? `<span style="font-size:12px;color:var(--danger);font-weight:600">Sold out</span>`
             : `<button class="btn-invest${ps.premium ? ' premium-btn' : ''}" onclick="openModal('${ps.id}')">Invest →</button>`}
         </div>
       </div>

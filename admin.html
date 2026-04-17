@@ -14,11 +14,12 @@
       max-width: 900px;
       margin: 0 auto;
       background: var(--card);
-      backdrop-filter: blur(16px);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
       padding: 30px;
       border-radius: var(--radius);
       border: 1px solid var(--border);
-      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
     }
     .admin-container h2 { font-family: var(--font-head); color: #fff; margin-bottom: 20px; font-weight: 800; }
     table { width: 100%; border-collapse: collapse; margin: 0; min-width: 600px; }
@@ -46,7 +47,7 @@
     .section-divider { border: none; border-top: 1px solid var(--border); margin: 30px 0; }
   </style>
 </head>
-<body>
+<body class="admin-theme">
   <div class="orb orb1"></div>
   <div class="orb orb2"></div>
   
@@ -79,6 +80,26 @@
         </thead>
         <tbody id="requests-body">
           <tr><td colspan="5">Loading requests...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+      <h2 style="margin-bottom:0">Request Log (Processed)</h2>
+    </div>
+
+    <div class="table-responsive" style="margin-bottom: 40px;">
+      <table id="log-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Idea (ID)</th>
+            <th>Bid Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="log-body">
+          <tr><td colspan="4">Loading log...</td></tr>
         </tbody>
       </table>
     </div>

@@ -15,6 +15,7 @@ onAuthStateChanged(auth, async (user) => {
       document.getElementById('admin-dashboard-page').style.display = 'block';
       listenToIdeas();
       listenToRequests();
+      listenToLogs();
     } else {
       showToast("Access Denied: You are not an admin.", "error");
       await signOut(auth);
@@ -110,6 +111,34 @@ window.updateBid = async function(ideaId) {
 
 /* ── INVESTMENT REQUESTS LISTENER ─────────────────────────── */
 let _reqUnsub = null;
+let _logUnsub = null;
+
+function listenToLogs() {
+  if (_logUnsub) _logUnsub();
+  const q = query(collection(db, "investmentRequests"), where("status", "!=", "pending"));
+  _logUnsub = onSnapshot(q, (snapshot) => {
+    const logs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderLogTable(logs);
+  });
+}
+
+function renderLogTable(logs) {
+  const tbody = document.getElementById('log-body');
+  if (!logs.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-dim);text-align:center;padding:20px">No processed requests yet</td></tr>';
+    return;
+  }
+  logs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)); // newest first
+  tbody.innerHTML = logs.map(req => `
+    <tr>
+      <td><strong>${req.userName}</strong></td>
+      <td>${req.psTitle ? req.psTitle.slice(0, 28) + '...' : req.psId}</td>
+      <td style="color:var(--accent);font-weight:700">₹${Number(req.amount).toLocaleString('en-IN')}</td>
+      <td><span class="status-badge ${req.status}">${req.status === 'approved' ? '✅ Approved' : '❌ Rejected'}</span></td>
+    </tr>
+  `).join('');
+}
+
 function listenToRequests() {
   if (_reqUnsub) _reqUnsub();
   const q = query(collection(db, "investmentRequests"), where("status", "==", "pending"));
@@ -161,11 +190,14 @@ window.approveRequest = async function(requestId, userId, psId, amount) {
       const newWallet = currentWallet - amount;
       const newInvestedPS = [...(userDoc.data().investedPS || []), psId];
 
+      const ideaRef = doc(db, "ideas", psId);
+
       transaction.update(userRef, { wallet: newWallet, investedPS: newInvestedPS });
       transaction.update(requestRef, { status: 'approved' });
+      transaction.update(ideaRef, { isBought: true, boughtBy: userDoc.data().name });
     });
 
-    showToast(`✅ Approved! ₹${Number(amount).toLocaleString('en-IN')} deducted from ${userId.slice(0,6)}...`, 'success');
+    showToast(`✅ Approved! ₹${Number(amount).toLocaleString('en-IN')} deducted.`, 'success');
   } catch (err) {
     console.error("Approval failed:", err);
     showToast('❌ Approval failed: ' + err.message, 'error');
