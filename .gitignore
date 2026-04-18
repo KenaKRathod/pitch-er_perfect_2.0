@@ -1,0 +1,6 @@
+node_modules/
+.firebase/
+.vscode/
+*.log
+temp_data.json
+pitch-er perfect 2.0.xlsx
