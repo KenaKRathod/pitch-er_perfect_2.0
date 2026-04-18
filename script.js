@@ -2,7 +2,7 @@ import {
   auth, db, 
   onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut,
   collection, doc, getDoc, setDoc, onSnapshot, runTransaction, addDoc, serverTimestamp, query, where
-} from './.gitignore/firebase-config.js';
+} from './firebase-config.js';
 
 const WALLET_START = 100000;
 

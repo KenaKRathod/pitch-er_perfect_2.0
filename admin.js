@@ -2,7 +2,7 @@ import {
   auth, db, 
   onAuthStateChanged, signInWithEmailAndPassword, signOut,
   collection, doc, getDoc, onSnapshot, updateDoc, runTransaction, addDoc, serverTimestamp, query, where
-} from './.gitignore/firebase-config.js';
+} from './firebase-config.js';
 
 let isAdmin = false;
 
