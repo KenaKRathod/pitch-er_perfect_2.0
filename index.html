@@ -27,6 +27,10 @@
   <div class="wallet-pill" id="topbar-wallet" style="display:none">
     <span>💰</span><span id="topbar-balance">₹1,00,000</span>
   </div>
+  <!-- MY CERTIFICATE BUTTON -->
+  <button onclick="openCertificateModal()" class="btn-certificate" id="btn-my-cert" style="display:none">
+    🎓 My Certificate
+  </button>
   <button onclick="handleLogout()" class="btn-outline">Logout</button>
 </div>
 
@@ -52,7 +56,6 @@
           <input type="password" id="login-pwd" placeholder="Enter password" />
         </div>
         <div class="error-msg" id="login-error"></div>
-        <!-- FIX: Stable id="login-btn" so JS can reliably reference this button -->
         <button class="btn-primary" id="login-btn" onclick="handleLogin()">Log In →</button>
         <p style="margin-top:1rem;font-size:14px;color:var(--text-muted);text-align:center">
           Don't have an account?
@@ -79,10 +82,6 @@
           <label for="signup-isteam" style="margin:0;font-size:14px;font-weight:normal">We are a Team</label>
         </div>
         <div class="error-msg" id="signup-error"></div>
-        <!-- FIX: Stable id="signup-btn" so JS can reliably reference this button.
-             The old code used querySelector('#signup-form .btn-primary') which returned
-             null because the button isn't a scoped child of #signup-form in the DOM,
-             causing the signup function to crash silently before making any Firebase call. -->
         <button class="btn-primary" id="signup-btn" onclick="handleSignup()">Sign Up →</button>
         <p style="margin-top:1rem;font-size:14px;color:var(--text-muted);text-align:center">
           Already have an account?
@@ -169,9 +168,46 @@
   </div>
 </div>
 
+<!-- ══════════════════════════════════════════════════════════
+     CERTIFICATE MODAL
+     ══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="cert-modal">
+  <div class="modal cert-modal-inner">
+    <!-- Header -->
+    <div class="cert-modal-header">
+      <div>
+        <h3 style="margin-bottom:4px">🎓 My Certificates</h3>
+        <div class="modal-sub" style="margin:0">Download participation certificates for your team</div>
+      </div>
+      <button class="btn-cancel cert-close-btn" onclick="closeCertificateModal()">✕</button>
+    </div>
+
+    <!-- Team info strip -->
+    <div class="cert-team-strip">
+      <div class="cert-team-dot" id="cert-team-initials">TM</div>
+      <div>
+        <div class="cert-team-name" id="cert-team-name-display">Team Name</div>
+        <div class="cert-team-sub" id="cert-domain-display">Domain</div>
+      </div>
+    </div>
+
+    <!-- Certificate list -->
+    <div class="cert-list" id="cert-list">
+      <!-- Populated by JS -->
+    </div>
+
+    <!-- Footer note -->
+    <div class="cert-footer-note">
+      Certificates are issued to all registered participants. Contact the organizer if your name is missing.
+    </div>
+  </div>
+</div>
+<!-- ══════════════════════════════════════════════════════════ -->
+
 <div class="toast" id="toast"></div>
 
 <script type="module" src="script.js"></script>
 <script type="module" src="seed.js"></script>
+<script type="module" src="certificates.js"></script>
 </body>
 </html>

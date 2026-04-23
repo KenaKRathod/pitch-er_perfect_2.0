@@ -192,6 +192,10 @@ window.handleLogout = async function() {
 /* DOMAIN */
 window.goToDomain = function() {
   document.getElementById('topbar').style.display = 'flex';
+
+  // ✅ ADD THIS LINE
+  document.getElementById('btn-my-cert').style.display = 'flex';
+
   const init = state.user.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
   document.getElementById('topbar-initials').textContent = init;
   document.getElementById('topbar-team').textContent = state.user.name;
@@ -202,6 +206,7 @@ window.goToDomain = function() {
       <span class="domain-icon">${d.icon}</span>
       <h3>${d.name}</h3><p>${d.desc}</p>
     </div>`).join('');
+
   showPage('domain');
 };
 
